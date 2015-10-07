@@ -74,7 +74,11 @@ maLasso1 <- function(S, n, id, lambda, W, update=100, max.gap=0.5, max.iter=100,
       iter <- iter + 1 # only update iteration counter if update performed
       Omega <- Omega.new
       primal <- primal.new
-      Sigma <- solve(Omega) # TODO: modify this later for larger problems
+      Sigma <- solve(Omega) 
+      # Note ^ : Kolar et al says you don't need to do inverse, but in my tests
+      # solve() has typically been quicker and more accurate than the method
+      # noted in their paper.  For larger networks further refinement may be n
+      # necessary.  
       Sigma <- (Sigma + t(Sigma)) / 2 # Force symmetry
       dual <- getDual(Sigma)
       gap <- abs(primal-dual)
