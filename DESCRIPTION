@@ -1,10 +1,10 @@
 Package: mapggm
 Type: Package
 Title: Multi-attribute network construction and perturbation detection
-Version: 1.0
+Version: 0.0.0
 Date: 2015-09-30
 Author: Paula J Griffin
 Maintainer: Paula J Griffin <paulajgriffin@gmail.com>
 Description: Companion package to 'Detection of multiple perturbations in multi-omics biological networks'
 License: Apache License
-Imports: igraph, Matrix
+Imports: Matrix
