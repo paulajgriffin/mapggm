@@ -1,6 +1,8 @@
 #' Check if a matrix is computationally positive-definite
+#' 
 #' @param M matrix of interest
 #' @return TRUE if matrix is computationally positive-definite
+#' @noRd
 isComputationallyPD <- function(M){
  eig <- eigen(M, only.values=TRUE, symmetric=TRUE)
  if(min(eig$values)>0){

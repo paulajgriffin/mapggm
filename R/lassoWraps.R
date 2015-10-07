@@ -1,16 +1,32 @@
 #' Wrapper function for multi-attribute network estimation via lasso
 #' 
+#' Performs estimation of a zero-mean multi-attribute Gaussian graphical model 
+#' as described by Kolar et al (2014) when \code{mode=1}.
+#' 
+#' If \code{mode=2}, the \code{id} argument is essentially disregarded, and all
+#' rows/columns in \code{S} are treated as if they represent individual nodes. 
+#' If \code{mode=3}, the optimization of \code{mode=2} is performed separately
+#' for each attribute type, and a matrix with 0 on all cross-attribute entries
+#' is returned.
+#' 
 #' @param S sample covariance matrix
 #' @param n number of samples
 #' @param id vector assigning variables to nodes
 #' @param lambda penalty tuning parameter
-#' @param W optional weight matrix
-#' @param mode 1 (multiattribute; default), 2 (unstructured together), 3 (separately)
+#' @param W optional weight matrix 
+#' @param mode estimation mode. Can be 1 (multiattribute; default), 
+#' 2 (unstructured together), or 3 (separately; only valid for 2-attribute data)
 #' @param update how often to print updates in optimization
 #' @param max.gap maximum allowable primal/dual gap
 #' @param max.iter maximum number of iterations to optimize (overrides max.gap)
 #' @param min.t minimum step size (overrides max.gap, max.iter)
-#' @return list of precision, covariance, optimization status, lambda, and number components
+#' @return list of precision, covariance, optimization status, lambda, 
+#' and number components
+#' 
+#' @references
+#' Kolar, M., Liu, H., and Xing, E. P. (2014). Graph estimation from 
+#' multi-attribute data. The Journal of Machine Learning Research 15, 1713–1750.
+#' 
 #' @export
 runLasso <- function(S, n, id, lambda, W=NULL, mode=1, update=100, 
                      max.gap=0.5, max.iter=100, min.t=.Machine$double.eps){
@@ -65,21 +81,45 @@ runLasso <- function(S, n, id, lambda, W=NULL, mode=1, update=100,
 
 #' Wrapper function for multi-attribute network estimation plus selection via lasso
 #' 
+#' Performs estimation of a zero-mean multi-attribute Gaussian graphical model 
+#' as described by Kolar et al (2014) when \code{mode=1} with a selection 
+#' procedure to determine optimal \code{lambda}.  Selection may be performed
+#' according to extended BIC, BIC, AIC, or Hamming distance to true graph.
+#' The true graph \code{Theta} is only required if Hamming distance is being
+#' used for the selection procedure. 
+#' 
+#' If \code{mode=2}, the \code{id} argument is essentially disregarded, and all
+#' rows/columns in \code{S} are treated as if they represent individual nodes. 
+#' If \code{mode=3}, the optimization of \code{mode=2} is performed separately
+#' for each attribute type, and a matrix with 0 on all cross-attribute entries
+#' is returned.
+#' 
 #' @param S sample covariance matrix
 #' @param n number of samples
 #' @param id vector assigning variables to nodes
 #' @param lambda.range vector of lambdas to try
 #' @param W optional weight matrix
-#' @param mode 1 (multiattribute; default), 2 (unstructured together), 3 (separately)
+#' @param mode estimation mode. Can be 1 (multiattribute; default), 
+#' 2 (unstructured together), or 3 (separately; only valid for 2-attribute data)
 #' @param update how often to print updates in optimization
 #' @param max.gap maximum allowable primal/dual gap
 #' @param max.iter maximum number of iterations to optimize (overrides max.gap)
 #' @param min.t minimum step size (overrides max.gap, max.iter
-#' @param method how to select the best model ('EBIC', 'BIC', 'AIC', or 'hamming')
+#' @param method how to select the best model ('EBIC', 'BIC', 'AIC', or 
+#' 'hamming')
 #' @param Theta.true true underlying graph (needed for 'hamming' method only)
 #' @param plot boolean, whether or not to make diagnostic plot
 #' @param gamma gamma parameter for EBIC method (default 0.5)
-#' @return list of precision, covariance, optimization status, lambda, and number components
+#' @return list of precision, covariance, optimization status, lambda, and 
+#' number components
+#' 
+#' @references
+#' Kolar, M., Liu, H., and Xing, E. P. (2014). Graph estimation from 
+#' multi-attribute data. The Journal of Machine Learning Research 15, 1713–1750.
+#' 
+#' Chen, J. and Chen, Z. (2008). Extended Bayesian information criteria for 
+#' model selection with large model spaces. Biometrika 95, 759–771.
+#' 
 #' @export
 runLassoSelect <- function(S,n, id, lambda.range, W=NULL, mode=1, update=100, 
                            max.gap=0.5, max.iter=100, min.t=.Machine$double.eps,

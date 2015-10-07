@@ -1,9 +1,15 @@
 #' Get Frobenius norms of submatrices with optional weights
 #' 
+#' Given a square matrix \code{M} and a vector \code{id} that distinguishes sections of \code{M}, 
+#' return a matrix with the Frobenius norm of the specified submatrices.  
+#' Optionally, provide a square weight matrix \code{W} with number of rows and columns
+#' equal to the unique entries in id that multiplies these norms.
+#' 
 #' @param M square matrix of interest
 #' @param id vector grouping elements of M 
-#' @param W optional weights (square matrix, dimensions equal to length(id))
+#' @param W optional weights (square matrix, dimensions equal to unique id
 #' @return matrix of Frobenius norms of submatrices
+#' @noRd
 blockNorms <- function(M, id, W=NULL){
   # Weights 
   nodes <- unique(id)
@@ -29,11 +35,15 @@ blockNorms <- function(M, id, W=NULL){
 
 #' Get BIC of a given network configuration
 #' 
+#' In a zero-mean Gaussian graphical model, calculate the Bayesian information
+#' criterion (BIC) of a model with the proposed precision matrix Omega.
+#' 
 #' @param S sample covariance matrix
 #' @param n number of samples
 #' @param Omega estimated precision
 #' @param id vector grouping elements of S, Omega
 #' @return Bayesian information criterion for model implied by Omega
+#' @noRd
 getBIC <- function(S, n, Omega, id){  
   nodes <- unique(id)
   n.nodes <- length(unique(id))
@@ -55,12 +65,23 @@ getBIC <- function(S, n, Omega, id){
 
 #' Get extended BIC of a given network configuration
 #' 
+#' In a zero-mean Gaussian graphical model, calculate the extended Bayesian 
+#' information criterion (EBIC; Chen and Chen, 2008) of a model with the 
+#' proposed precision matrix Omega.  The parameter gamma controls the weight
+#' given towards the component of EBIC related to model size.
+#' 
 #' @param S sample covariance matrix
 #' @param n number of samples
 #' @param Omega estimated precision
 #' @param id vector grouping elements of S, Omega
 #' @param gamma EBIC parameter (default 0.5)
 #' @return extended Bayesian information criterion for model implied by Omega
+#' 
+#' @references
+#' Chen, J. and Chen, Z. (2008). Extended Bayesian information criteria for 
+#' model selection with large model spaces. Biometrika 95, 759–771.
+#' 
+#' @noRd
 getEBIC <- function(S, n, Omega, id, gamma=0.5){  
   nodes <- unique(id)
   n.nodes <- length(unique(id))
@@ -90,11 +111,15 @@ getEBIC <- function(S, n, Omega, id, gamma=0.5){
 
 #' Get AIC of a given network configuration
 #' 
+#' In a zero-mean Gaussian graphical model, calculate the Akaike information
+#' criterion (AIC) of a model with the proposed precision matrix Omega.
+#' 
 #' @param S sample covariance matrix
 #' @param n number of samples
 #' @param Omega estimated precision
 #' @param id vector grouping elements of S, Omega
 #' @return Akaike information criterion for model implied by Omega
+#' @noRd
 getAIC <- function(S, n, Omega, id){  
   nodes <- unique(id)
   n.nodes <- length(unique(id))
@@ -114,10 +139,14 @@ getAIC <- function(S, n, Omega, id){
 
 #' Get Hamming distance of a given network configuration (truth required)
 #' 
+#' Calculate the Hamming distance of a given network construction (as provided
+#' by Omega), compared to a true network.  
+#' 
 #' @param Omega estimated precision
 #' @param Theta true network graph of joint nodes
 #' @param id vector grouping elements of Omega
 #' @return Hamming distance between Theta and graph implied by Omega
+#' @noRd
 getHammingDist <- function(Omega, Theta, id){
   # Overall node graph
   p <- length(unique(id))
@@ -133,12 +162,14 @@ getHammingDist <- function(Omega, Theta, id){
 
 #' Get value of primal function (called by maLasso1)
 #' 
+#' 
 #' @param Omega current estimated precision
 #' @param S sample covariance matrix
 #' @param W weight matrix
 #' @param id vector grouping elements of S, Omega
 #' @param lambda penalty parameter
 #' @return value of primal function for optimization problem
+#' @noRd
 getPrimal <- function(Omega, S, W, id, lambda){
   primal <- sum(diag(S %*% Omega)) - log(det(Omega)) + 
     lambda*sum(blockNorms(M=Omega, W=W, id=id))
@@ -150,6 +181,7 @@ getPrimal <- function(Omega, S, W, id, lambda){
 #' 
 #' @param Sigma current estimated covariance
 #' @return value of dual function for optimization problem
+#' @noRd
 getDual <- function(Sigma) {
  dual <- ncol(Sigma) + log(det(Sigma))
  return(dual)
@@ -165,6 +197,7 @@ getDual <- function(Sigma) {
 #' @param lambda penalty parameter
 #' @param W weight matrix
 #' @return list of updated covariance and precision estimates
+#' @noRd
 updateNodes <- function(t.step, id, S, Omega.tmp, Sigma.tmp, lambda, W ){
   
   # Blank for next update
@@ -223,13 +256,26 @@ updateNodes <- function(t.step, id, S, Omega.tmp, Sigma.tmp, lambda, W ){
 
 #' Generate lambdas to try
 #' 
-#' Generate penalty parameters spanning a range of 1 to n.nodes submatrix blocks
+#' Generate penalty parameters spanning a range of 1 to 
+#' \code{length(unique(id))} submatrix blocks.  This function is provided to 
+#' establish a range of "reasonable" penalty parameters for optimization 
+#' according to the algorithm of Kolar et al (2014).
 #' 
 #' @param S sample covariance
 #' @param id vector of node identifiers
 #' @param length.out number of lambda parameters to return
-#' @return vector of length.out equally spaced lambdas
+#' @return vector of \code{length.out} equally spaced lambdas
 #' @export
+#' 
+#' @references
+#' Kolar, M., Liu, H., and Xing, E. P. (2014). Graph estimation from 
+#' multi-attribute data. The Journal of Machine Learning Research 15, 1713–1750.
+#' 
+#' @examples
+#' Y <- matrix(rnorm(120), nrow=20, ncol=6)
+#' S <- crossprod(Y)
+#' id <- rep(1:3, each=2)
+#' getLambdas(S, id, 5)
 getLambdas <- function(S, id, length.out=10){
   fro <- blockNorms(M=S, id=id)
   min.fro <- min(fro[fro>0])
@@ -239,30 +285,3 @@ getLambdas <- function(S, id, length.out=10){
   lambdas <- lambdas[2:(length.out+1)]
   return(lambdas)
 }
-
-# NB: Probably remove this function later -- suspected to be super old/useless
-# hammingDist <- function(Omega1, Omega2, Omega3, Theta, id){
-#  
-#   # Overall node graph
-#   p <- length(unique(id))
-#   Theta.combo <- Theta[!duplicated(id), !duplicated(id)]
-#   
-#   Omega.list <- list(Omega1, Omega2, Omega3)
-# 
-#   hamming <- c()
-#  
-#   for(o in Omega.list) {
-#     ans.all <- Matrix(ifelse(o != 0,1,0), sparse=TRUE)
-#     ans.combo <- Matrix(ifelse(blockNorms(M=o, W=matrix(1,p,p ), id=id)!=0,1,0), sparse=TRUE)
-#     
-#     diag(ans.all) <- 0
-#     diag(ans.combo) <- 0
-#     
-#     hamming <- c(hamming, sum(abs(ans.all-Theta))/2, sum(abs(ans.combo-Theta.combo))/2)
-#     
-#   }
-#   hdist <- data.frame(hamming.dist=hamming, 
-#                       type=rep(c('Structured','Unstructured','Separated'),each=2),
-#                       graph=rep(c('All','Combined'), 3))
-#   return(hamming)
-# }

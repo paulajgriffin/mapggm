@@ -1,6 +1,8 @@
 #' Multi-attribute subgraph estimation 
 #' 
-#' This should only be called from within maLasso.
+#' This estimates a single connected component from a multi-attribute graph. 
+#' This function should only be called from within maLasso, as otherwise the
+#' run will perform excessively large inversions.
 #' 
 #' @param S sample covariance matrix
 #' @param n number of samples
@@ -12,6 +14,12 @@
 #' @param max.iter maximum number of iterations to complete (overriedes max.gap)
 #' @param min.t minimum step size (overrides max.gap, max.iter)
 #' @return list of precision, covariance, optimization status, lambda
+#' 
+#' @references
+#' Kolar, M., Liu, H., and Xing, E. P. (2014). Graph estimation from 
+#' multi-attribute data. The Journal of Machine Learning Research 15, 1713-1750.
+#' 
+#' @noRd
 maLasso1 <- function(S, n, id, lambda, W, update=100, max.gap=0.5, max.iter=100, 
                      min.t=.Machine$double.eps){
   # Convenience calculations
@@ -101,7 +109,8 @@ maLasso1 <- function(S, n, id, lambda, W, update=100, max.gap=0.5, max.iter=100,
 #' Multi-attribute network estimation 
 #' 
 #' Estimates block precisions and covariances for a multi-attribute network
-#' based on a Gaussian graphical model with zero mean vector.
+#' based on a Gaussian graphical model with zero mean vector.  This is according
+#' to the method described by Kolar et al (2015).
 #' 
 #' @param S sample covariance matrix
 #' @param n number of samples
@@ -113,6 +122,11 @@ maLasso1 <- function(S, n, id, lambda, W, update=100, max.gap=0.5, max.iter=100,
 #' @param max.iter maximum number of iterations to complete (overriedes max.gap)
 #' @param min.t minimum step size (overrides max.gap, max.iter)
 #' @return list of precision, covariance, optimization status, lambda, and number components
+#' 
+#' @references
+#' Kolar, M., Liu, H., and Xing, E. P. (2014). Graph estimation from 
+#' multi-attribute data. The Journal of Machine Learning Research 15, 1713–1750.
+#' 
 #' @export
 maLasso <- function(S, n, id, lambda, W=NULL, update=100, max.gap=0.5, 
                    max.iter=100, min.t=.Machine$double.eps){
