@@ -7,4 +7,4 @@ Author: Paula J Griffin
 Maintainer: Paula J Griffin <paulajgriffin@gmail.com>
 Description: Companion package to 'Detection of multiple perturbations in multi-omics biological networks'
 License: Apache License
-Imports: Matrix
+Imports: Matrix, mvtnorm, igraph

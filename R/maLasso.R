@@ -1,8 +1,8 @@
 #' Multi-attribute subgraph estimation 
 #' 
 #' This estimates a single connected component from a multi-attribute graph. 
-#' This function should only be called from within maLasso, as otherwise the
-#' run will perform excessively large inversions.
+#' This function should only be called from within multiAttLasso, as otherwise 
+#' the run will perform excessively large inversions.
 #' 
 #' @param S sample covariance matrix
 #' @param n number of samples
@@ -20,7 +20,7 @@
 #' multi-attribute data. The Journal of Machine Learning Research 15, 1713-1750.
 #' 
 #' @noRd
-maLasso1 <- function(S, n, id, lambda, W, update=100, max.gap=0.5, max.iter=100, 
+submatrixMultiAttLasso <- function(S, n, id, lambda, W, update=100, max.gap=0.5, max.iter=100, 
                      min.t=.Machine$double.eps){
   # Convenience calculations
   p <- ncol(S) # combined number of attributes
@@ -61,7 +61,7 @@ maLasso1 <- function(S, n, id, lambda, W, update=100, max.gap=0.5, max.iter=100,
     } 
     
     # Calculate a new primal value
-    if( det(Omega) > 0 ){
+    if( det(Omega.new) > 0 ){
       primal.new <- getPrimal(Omega=Omega.new, S=S, W=W, id=id, lambda=lambda)
     } 
     
@@ -86,17 +86,17 @@ maLasso1 <- function(S, n, id, lambda, W, update=100, max.gap=0.5, max.iter=100,
       
       # Update if requested 
       if(iter %% update == 0){
-        print.str <- 'Iteration %d: primal=%.2E, dual=%.2E, gap=gap.now=%.2E, t=%.1E)'
-        print(sprintf(print.str, iter, primal, dual, gap, t.step))
+        print.str <- '\nIteration %d: primal=%.2E, dual=%.2E, gap=gap.now=%.2E, t=%.1E)'
+        cat(sprintf(print.str, iter, primal, dual, gap, t.step))
       }
     } 
     
     if(!is.na(getDual(Sigma)) &  abs(primal - getDual(Sigma) ) < max.gap ){
       opt <- TRUE 
-      print.str <- 'CONVERGED at %d: gap =%.2E < %.2E, t=%.1E)'
+      print.str <- '\nCONVERGED at %d: gap =%.2E < %.2E, t=%.1E)\n'
       iter <- max.iter # get out of the loop
     } else if ( iter == max.iter | t.step < min.t | is.na(getDual(Sigma))) {
-      print.str <- 'COMPLETED WITHOUT CONVERGENCE at %d: gap =%.2E > %.2E, t=%.1E)'
+      print.str <- '\nCOMPLETED WITHOUT CONVERGENCE at %d: gap =%.2E > %.2E, t=%.1E)\n'
     }
   } # END: while( iter < max.iter  & t.step >= min.t)
   
@@ -129,10 +129,13 @@ maLasso1 <- function(S, n, id, lambda, W, update=100, max.gap=0.5, max.iter=100,
 #' 
 #' @references
 #' Kolar, M., Liu, H., and Xing, E. P. (2014). Graph estimation from 
-#' multi-attribute data. The Journal of Machine Learning Research 15, 1713–1750.
+#' multi-attribute data. The Journal of Machine Learning Research 15, 1713-1750.
+#' 
+#' @importFrom igraph graph.adjacency
+#' @importFrom igraph clusters
 #' 
 #' @export
-maLasso <- function(S, n, id, lambda, W=NULL, update=100, max.gap=0.5, 
+multiAttLasso <- function(S, n, id, lambda, W=NULL, update=100, max.gap=0.5, 
                    max.iter=100, min.t=.Machine$double.eps){
   # Convenience calculations
   p <- ncol(S)
@@ -162,14 +165,14 @@ maLasso <- function(S, n, id, lambda, W=NULL, update=100, max.gap=0.5,
   
   # Individual optimizations for each connected component
   for(b in sort(unique(bl))){
-    cat(sprintf('Working on component %d of %d', b, length(unique((bl)))))
+    cat(sprintf('\nWorking on component %d of %d', b, length(unique((bl)))))
     which.nodes <- nodes[bl==b]
     which.cols <- id %in% which.nodes
-    ans.bl <- maLasso1(S=S[which.cols, which.cols, drop=FALSE], n=n, 
-                       id=id[which.cols],  lambda=lambda, 
-                       W=W[which.nodes, which.nodes, drop=FALSE],
-                       update=update, max.gap=max.gap, 
-                       max.iter=max.iter, min.t=min.t)
+    ans.bl <- submatrixMultiAttLasso(S=S[which.cols, which.cols, drop=FALSE], 
+                                     n=n, id=id[which.cols],  lambda=lambda, 
+                                     W=W[which.nodes, which.nodes, drop=FALSE],
+                                     update=update, max.gap=max.gap, 
+                                     max.iter=max.iter, min.t=min.t)
     # Fill in values
     Omega.tmp[which.cols, which.cols] <- ans.bl$Omega
     Sigma.tmp[which.cols, which.cols] <- ans.bl$Sigma

@@ -105,7 +105,8 @@ getEBIC <- function(S, n, Omega, id, gamma=0.5){
   lprobs <- lnum-ldenom
   
   EBIC <- n*(sum(diag(S %*% Omega)) - log(det(Omega)))  +  blockDims * log(n) + 
-    2*gamma*lprobs[blockDims+1]
+    2*gamma*lprobs[blockDims]
+  
   return(EBIC)
 }
 
@@ -258,7 +259,7 @@ updateNodes <- function(t.step, id, S, Omega.tmp, Sigma.tmp, lambda, W ){
 #' 
 #' Generate penalty parameters spanning a range of 1 to 
 #' \code{length(unique(id))} submatrix blocks.  This function is provided to 
-#' establish a range of "reasonable" penalty parameters for optimization 
+#' establish a range of reasonable penalty parameters for optimization 
 #' according to the algorithm of Kolar et al (2014).
 #' 
 #' @param S sample covariance
@@ -269,14 +270,14 @@ updateNodes <- function(t.step, id, S, Omega.tmp, Sigma.tmp, lambda, W ){
 #' 
 #' @references
 #' Kolar, M., Liu, H., and Xing, E. P. (2014). Graph estimation from 
-#' multi-attribute data. The Journal of Machine Learning Research 15, 1713–1750.
+#' multi-attribute data. The Journal of Machine Learning Research 15, 1713-1750.
 #' 
 #' @examples
 #' Y <- matrix(rnorm(120), nrow=20, ncol=6)
 #' S <- crossprod(Y)
 #' id <- rep(1:3, each=2)
-#' getLambdas(S, id, 5)
-getLambdas <- function(S, id, length.out=10){
+#' getLambdaRange(S, id, 5)
+getLambdaRange <- function(S, id, length.out=10){
   fro <- blockNorms(M=S, id=id)
   min.fro <- min(fro[fro>0])
   diag(fro) <- 0

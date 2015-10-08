@@ -25,37 +25,51 @@
 #' 
 #' @references
 #' Kolar, M., Liu, H., and Xing, E. P. (2014). Graph estimation from 
-#' multi-attribute data. The Journal of Machine Learning Research 15, 1713–1750.
+#' multi-attribute data. The Journal of Machine Learning Research 15, 1713-1750.
+#' 
+#' @examples
+#' library(mvtnorm)
+#' id <- rep(1:3, each=2)
+#' Omega <- matrix(0, nrow=6, ncol=6)
+#' Omega[1:4,1:4] <- 1
+#' diag(Omega) <- 6
+#' Sigma <- solve(Omega)
+#' n <- 1000
+#' Y <- rmvnorm(n, sigma=Sigma)
+#' S <- crossprod(Y)
+#' 
+#' lambdas <- getLambdaRange(S, id, 10)
+#' result <- multiAttEstimate(S, n, id, lambdas[1])
 #' 
 #' @export
-runLasso <- function(S, n, id, lambda, W=NULL, mode=1, update=100, 
+multiAttEstimate <- function(S, n, id, lambda, W=NULL, mode=1, update=100, 
                      max.gap=0.5, max.iter=100, min.t=.Machine$double.eps){
   # Mode can be 1 (multiattribute), 2 (unstructured together), 3 (separately)
   if(mode==1) {
     # Run multiattribute
-    print('Running in multi-attribute mode')
-    ans <- maLasso(S=S, n=n, id=id, lambda=lambda, W=W, update=update, 
+    cat('Running in multi-attribute mode\n')
+    ans <- multiAttLasso(S=S, n=n, id=id, lambda=lambda, W=W, update=update, 
                     max.gap=max.gap, max.iter=max.iter, min.t=min.t)
     
   } else if (mode==2) {
     # Run unstructured together
-    print('Running in unstructured mode')
+    cat('Running in unstructured mode\n')
     id2 <- 1:ncol(S)
-    ans <- maLasso(S=S, n=n, id=id2, lambda=lambda, W=W, update=update, 
+    ans <- multiAttLasso(S=S, n=n, id=id2, lambda=lambda, W=W, update=update, 
                     max.gap=max.gap, max.iter=max.iter, min.t=min.t)
     
   } else if (mode==3) {
     # Run separately 
-    print('Running in separated mode')
+    cat('Running in separated mode\n')
     id3a <- which(!duplicated(id))
     id3b <- which(duplicated(id))
-    print('First optimization...')
-    ans3a <- maLasso(S=S[id3a,id3a,drop=FALSE], n=n, id=1:length(id3a), 
+    cat('First optimization...\n')
+    ans3a <- multiAttLasso(S=S[id3a,id3a,drop=FALSE], n=n, id=1:length(id3a), 
                      lambda=lambda, W=W,  update=update, max.gap=max.gap, 
                      max.iter=max.iter, min.t=min.t)
     
-    print('Second optimization...')
-    ans3b <- maLasso(S=S[id3b,id3b,drop=FALSE],n=n, id=1:length(id3b), 
+    cat('Second optimization...\n')
+    ans3b <- multiAttLasso(S=S[id3b,id3b,drop=FALSE],n=n, id=1:length(id3b), 
                      lambda=lambda, W=W,  update=update, max.gap=max.gap, 
                      max.iter=max.iter, min.t=min.t)
     
@@ -105,9 +119,9 @@ runLasso <- function(S, n, id, lambda, W=NULL, mode=1, update=100,
 #' @param max.gap maximum allowable primal/dual gap
 #' @param max.iter maximum number of iterations to optimize (overrides max.gap)
 #' @param min.t minimum step size (overrides max.gap, max.iter
-#' @param method how to select the best model ('EBIC', 'BIC', 'AIC', or 
-#' 'hamming')
-#' @param Theta.true true underlying graph (needed for 'hamming' method only)
+#' @param method how to select the best model (\code{'EBIC'}, \code{'BIC'}, 
+#' \code{'AIC'}, or \code{'hamming'})
+#' @param Theta.true true underlying graph (\code{'hamming'} method only)
 #' @param plot boolean, whether or not to make diagnostic plot
 #' @param gamma gamma parameter for EBIC method (default 0.5)
 #' @return list of precision, covariance, optimization status, lambda, and 
@@ -115,34 +129,49 @@ runLasso <- function(S, n, id, lambda, W=NULL, mode=1, update=100,
 #' 
 #' @references
 #' Kolar, M., Liu, H., and Xing, E. P. (2014). Graph estimation from 
-#' multi-attribute data. The Journal of Machine Learning Research 15, 1713–1750.
+#' multi-attribute data. The Journal of Machine Learning Research 15, 1713-1750.
 #' 
 #' Chen, J. and Chen, Z. (2008). Extended Bayesian information criteria for 
-#' model selection with large model spaces. Biometrika 95, 759–771.
+#' model selection with large model spaces. Biometrika 95, 759-771.
+#' 
+#' @examples
+#' library(mvtnorm)
+#' id <- rep(1:3, each=2)
+#' Omega <- matrix(0, nrow=6, ncol=6)
+#' Omega[1:4,1:4] <- -1
+#' diag(Omega) <- 6
+#' Sigma <- solve(Omega)
+#' n <- 1000
+#' Y <- rmvnorm(n, sigma=Sigma)
+#' S <- crossprod(Y)
+#' 
+#' lambdas <- getLambdaRange(S, id, 3)
+#' result <- multiAttSelect(S, n, id, lambdas)
+#' 
 #' 
 #' @export
-runLassoSelect <- function(S,n, id, lambda.range, W=NULL, mode=1, update=100, 
+multiAttSelect <- function(S,n, id, lambda.range, W=NULL, mode=1, update=100, 
                            max.gap=0.5, max.iter=100, min.t=.Machine$double.eps,
-                           method='EBIC', Theta.true=NULL, plot=NULL, 
+                           method='BIC', Theta.true=NULL, plot=NULL, 
                            gamma=0.5){  
   # Printing
   if(method=='hamming' & is.null(Theta.true)){
-    print('Error: must specify Theta.true if selecting by Hamming distance.  
-            Will run in BIC mode instead')
+    cat('Error: must specify Theta.true if selecting by Hamming distance.  
+            Will run in BIC mode instead.\n')
     method <- 'BIC'
   }
   if(method=='BIC'){
-    print(sprintf('----- Finding lambda by min BIC: lambda=(%s)', 
+    cat(sprintf('----- Finding lambda by min BIC: lambda=(%s)\n', 
                   paste(lambda.range, collapse=', ')))
   } else if(method=='AIC'){
-    print(sprintf('----- Finding lambda by min AIC: lambda=(%s)', 
+    cat(sprintf('----- Finding lambda by min AIC: lambda=(%s)\n', 
                   paste(lambda.range, collapse=', ')))
   } else if(method=='EBIC'){
-    print(sprintf('----- Finding lambda by min EBIC (gamma=%.2f): lambda=(%s)', 
+    cat(sprintf('----- Finding lambda by min EBIC (gamma=%.2f): lambda=(%s)\n', 
                   gamma, paste(lambda.range, collapse=', ')))
   }
   else if (method=='hamming'){
-    print(sprintf('----- Finding lambda by min Hamming distance: lambda=(%s)', 
+    cat(sprintf('----- Finding lambda by min Hamming distance: lambda=(%s)\n', 
                   paste(lambda.range, collapse=', ')))
   }
 
@@ -156,9 +185,9 @@ runLassoSelect <- function(S,n, id, lambda.range, W=NULL, mode=1, update=100,
 
   # For each value of lambda, run.  Save ans & BIC if first or best
   for(lambda in lambda.range){
-    print(sprintf('+++++ Trying lambda=%.4f', lambda))
+    cat(sprintf('+++++ Trying lambda=%.4f', lambda))
     # Run optimization
-    ans.now <- runLasso(S=S, n=n, id=id, lambda=lambda, W=W, mode=mode, 
+    ans.now <- multiAttEstimate(S=S, n=n, id=id, lambda=lambda, W=W, mode=mode, 
                         update=update, max.gap=max.gap, max.iter=max.iter, 
                         min.t=min.t)
     if(mode==1){
@@ -212,7 +241,7 @@ runLassoSelect <- function(S,n, id, lambda.range, W=NULL, mode=1, update=100,
     }
   }
   tuning$Best <- ifelse(tuning$lambda == lambda.best, 'BEST', ' ')
-  print(sprintf('----- BEST %s=%.2f at lambda==%.2f', method, 
+  cat(sprintf('----- BEST %s=%.2f at lambda==%.2f\n', method, 
                 min(tuning[,method]), lambda.best))
   print(tuning)
 
