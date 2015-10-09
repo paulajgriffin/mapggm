@@ -43,7 +43,8 @@ blockNorms <- function(M, id, W=NULL){
 #' @param Omega estimated precision
 #' @param id vector grouping elements of S, Omega
 #' @return Bayesian information criterion for model implied by Omega
-#' @noRd
+#' 
+#' @export
 getBIC <- function(S, n, Omega, id){  
   nodes <- unique(id)
   n.nodes <- length(unique(id))
@@ -81,7 +82,7 @@ getBIC <- function(S, n, Omega, id){
 #' Chen, J. and Chen, Z. (2008). Extended Bayesian information criteria for 
 #' model selection with large model spaces. Biometrika 95, 759–771.
 #' 
-#' @noRd
+#' @export
 getEBIC <- function(S, n, Omega, id, gamma=0.5){  
   nodes <- unique(id)
   n.nodes <- length(unique(id))
@@ -120,7 +121,8 @@ getEBIC <- function(S, n, Omega, id, gamma=0.5){
 #' @param Omega estimated precision
 #' @param id vector grouping elements of S, Omega
 #' @return Akaike information criterion for model implied by Omega
-#' @noRd
+#' 
+#' @export
 getAIC <- function(S, n, Omega, id){  
   nodes <- unique(id)
   n.nodes <- length(unique(id))
@@ -147,7 +149,8 @@ getAIC <- function(S, n, Omega, id){
 #' @param Theta true network graph of joint nodes
 #' @param id vector grouping elements of Omega
 #' @return Hamming distance between Theta and graph implied by Omega
-#' @noRd
+#' 
+#' @export
 getHammingDist <- function(Omega, Theta, id){
   # Overall node graph
   p <- length(unique(id))
