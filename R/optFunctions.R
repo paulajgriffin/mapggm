@@ -9,7 +9,8 @@
 #' @param id vector grouping elements of M 
 #' @param W optional weights (square matrix, dimensions equal to unique id
 #' @return matrix of Frobenius norms of submatrices
-#' @noRd
+#' 
+#' @export
 blockNorms <- function(M, id, W=NULL){
   # Weights 
   nodes <- unique(id)
@@ -80,7 +81,7 @@ getBIC <- function(S, n, Omega, id){
 #' 
 #' @references
 #' Chen, J. and Chen, Z. (2008). Extended Bayesian information criteria for 
-#' model selection with large model spaces. Biometrika 95, 759–771.
+#' model selection with large model spaces. Biometrika 95, 759-771.
 #' 
 #' @export
 getEBIC <- function(S, n, Omega, id, gamma=0.5){  
